@@ -1,0 +1,122 @@
+=======================================================================
+/*SQL Basics: This section covers the first half of SQL basics and notes regarding what each function does 
+and examples in what situations to use it in 
+  WARNING: Don't query this since you may not have the same data sets and column types. These are just examples*/
+=======================================================================
+--**FROM** is executed before SELECT. It brings the table over.
+--This is a comment. Can also have multiple line comments /*  */
+
+--Retrieve all customer Data
+SELECT*
+FROM customers
+
+--Retrieve all order data from orders
+SELECT*
+FROM orders
+
+--Retrieve each customers name,country, and score
+SELECT
+first_name,
+country,
+score
+FROM customers
+
+--WHERE filters your table based on a condition, It occurs after FROM. Conditions may include =, !=(not equal), <>(not equal) and more.
+--Retrieve customers with score not equal to 0
+SELECT*
+FROM customers
+WHERE score !=0
+
+--retrieve customers from germany
+SELECT*
+FROM customers
+WHERE country = 'Germany'
+
+--ORDER BY sorts your data using ASC or DESC. Column name goes first then ASC or DESC. Goes after FROM. ASC is default
+
+--Retrieve all customers and sort results by highest score first
+SELECT*
+FROM customers
+ORDER BY score DESC
+
+--NESTED order by example below. ASC by anything but numbers goes alphabetically.
+--RETRIEVE all customers and sort the results by the country and then by highest score
+-- order by has priority, uses whatever column u list first as priority
+SELECT*
+FROM customers
+ORDER BY
+country ASC,
+score DESC
+
+--GROUP BY, combines rows with the same value. Ex: If theres two germanys and your dealing with total score, each
+--value should be repped in the table only ONCE with GROUP BY
+
+--Find total score from each country
+SELECT
+country,
+SUM(score) AS Total_Score --need to aggregate data
+FROM customers
+GROUP BY country
+--ALL columns in select must either be aggregated  or included in group by otherwise an error occurs
+
+--find the total score and total number of customers for each country
+SELECT
+country,
+SUM(score) AS Total_Score,
+COUNT(first_name) AS Total_Customers
+FROM customers
+GROUP BY country
+
+--HAVING, filters data after aggregation(Group by)
+-- find average score for each country consideirng only customers with score !=0
+-- and return only those countries with avg score >430
+SELECT
+country,
+AVG(score) AS Avg_Score
+FROM customers
+WHERE score !=0
+GROUP BY country
+HAVING AVG(score)>430 -- having follows same rules as group by(aggregations and being in the select clause)
+
+--DISTINCT is to make sure each value only happens once, dont use if not necessary its slow for your queries
+--return unique list of all countries
+SELECT DISTINCT
+country
+FROM customers
+
+--TOP(limit) restricts rows shown as indicated by limit. Based on row numbers
+--retreive only 3 customers, top 3 goes before the star
+SELECT TOP 3 *
+FROM customers
+
+--retrieve the top 3 customers with the highest scores
+SELECT TOP 3*
+FROM customers
+ORDER BY score DESC
+
+--retrieves lowest two customers based on score
+SELECT TOP 2*
+FROM customers
+ORDER BY score ASC
+
+--get the two most recent orders
+SELECT TOP 2*
+FROM orders
+ORDER BY order_date DESC
+
+/*Complete order is
+SELECT
+FROM
+WHERE 
+GROUP BY
+HAVING 
+ORDER BY
+--execution order:
+FROM(retrieves data)
+WHERE(applies a condition)
+GROUP BY(aggregates similar groups of data)
+HAVING(filters based on group by results)
+SELECT/DISTINCT(chooses the data),
+ORDER BY (rearranges data)
+TOP(limits results to a certain number following TOP) */
+
