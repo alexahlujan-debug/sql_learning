@@ -1,0 +1,82 @@
+/* This section covers creating, altering, and updating tables as well as dropping them completely. Below you'll find examples but again, don't run the queries
+if you lack the data sets */
+--static values, Need single quotes around words but not numbers
+SELECT
+123 AS Static_Number
+
+--create a new table called persons with columns:id, person_name, birth_date, and phone
+--DEFINITION: primary key is something that uniquely identifies every column
+--When creating a table, you must identify the character type of each column you're making (VARCHAR, DATE, etc.)
+CREATE TABLE persons (
+	id INT NOT NULL,
+	person_name VARCHAR(50) NOT NULL,
+	birth_date DATE, 
+	phone VARCHAR(15) NOT NULL,
+	CONSTRAINT pk_persons PRIMARY KEY(id)
+) 
+
+--Add a new column called email to persons table. Can only be done using ALTER
+ALTER TABLE persons
+ADD email VARCHAR(50) NOT NULL
+
+--remove column phone from table
+ALTER TABLE persons
+DROP COLUMN phone
+
+--delete table persons from data base
+DROP TABLE persons
+
+
+--INSERT SYNTAX: INSERT INTO [table name] (columns, ...) -> optional colums but if you leave it blank then it expects values for all columns
+--VALUES(val1,val2...)... number of colums and values MUST match
+
+INSERT INTO customers(id,first_name,country,score)
+VALUES
+	(6,'Anna', 'USA', NULL),
+	(7, 'Sam', NULL, 100) 
+--COLUMNS and VALUES must be in the same order as each other.
+--columns not included in insert become NULL if it is allowed
+
+--copy data from customers to into persons table, database will never compare column names. 
+--as long as its same data type
+INSERT INTO persons(id, person_name, birth_date, phone)
+SELECT
+id,
+first_name,
+NULL,
+'Unknown'
+FROM customers
+
+--UPDATE table_name then use SET column1 =value 1 colum2... then WHERE clause
+--change the score of customer with ID 6 to 0
+
+UPDATE customers
+SET score = 0
+WHERE id = 6
+
+SELECT*
+FROM customers
+
+--change score of customer id 10 to 0 and change country to UK
+UPDATE customers
+SET 
+score =0,
+country = 'UK'
+WHERE id=10
+
+--update all customers with null score by setting score to 0
+
+UPDATE customers
+SET
+	score =0
+WHERE score IS NULL
+
+
+--DELETE FROM table_name WHERE (syntax)
+-- delete all customers with an ID greater than 5
+DELETE FROM customers
+WHERE ID>5
+
+-- delete alll data from table persons, truncate faster than DELETE
+TRUNCATE TABLE persons 
+
