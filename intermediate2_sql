@@ -1,0 +1,142 @@
+/*This section covers examples on advanced SQL joins including LEFT and RIGHT ANTI JOIN, FULL ANTI JOIN, CROSS JOIN, UNION, UNION ALL, EXCEPT, AND INTERSECT*/
+
+--LEFT anti join returns rows from the left that have no match in the right
+--the actual syntax for it uses LEFT + WHERE
+--Get all customers who havent placed any order
+SELECT
+c.id,
+c.first_name,
+o.order_id,
+o.sales
+FROM customers c
+LEFT JOIN orders o
+ON c.id= o.customer_id
+WHERE o.customer_id IS NULL
+
+--right anti join, returns rows from right which has no match in the left
+--primary source of data is the right table
+--get all orders without matching customers
+SELECT
+c.id,
+c.first_name,
+o.order_id,
+o.sales
+FROM customers c
+RIGHT JOIN orders o
+ON c.id=o.customer_id
+WHERE c.id IS NULL
+
+--LEFT just indicates which table is priority. JOIN just joins the table.
+
+--FULL ANTI JOIN, return unmatching rows from BOTH tables
+-- find customers without orders and vice versa
+SELECT
+c.id,
+c.first_name,
+o.order_id,
+o.sales
+FROM customers c
+FULL JOIN orders o
+ON c.id= o.customer_id
+WHERE c.id IS NULL OR o.customer_id IS NULL
+
+--get all customers along with their orders but only for customers who have placed an order
+--without using inner join (so essentially only what matches)
+SELECT
+c.id,
+c.first_name,
+o.order_id,
+o.sales
+FROM customers c
+FULL JOIN orders o
+ON c.id=o.customer_id
+WHERE c.id= o.customer_id
+
+--CROSS JOIN combines every row from left with every row from right
+--syntax uses actual CROSS JOIN, no condition needed either
+--Generate all possible combinations of customers and orders
+SELECT
+c.id,
+c.first_name,
+o.order_id,
+o.sales
+FROM customers c
+CROSS JOIN orders o
+
+
+--Using SalesDB, retrieve a list of all orders, along with related customer,
+--product,employee detail. This part here ONLY using SalesDB
+--display order ID, customer name, prod name, sales amount, prdct price, salesperson name
+SELECT
+o.OrderID,
+c.FirstName AS CustomerFirstName,
+c.LastName AS CustomerLastname,
+p.Product,
+o.Sales,
+p.Price,
+e.FirstName AS EmployeeFirstName,
+e.LastName AS EmployeeLastName
+FROM Sales.Orders o
+LEFT JOIN Sales.Customers c 
+ON o.CustomerID =c.CustomerID
+LEFT JOIN Sales.Products p 
+ON p.ProductID = o.ProductID
+LEFT JOIN Sales.Employees e 
+ON e.EmployeeID = o.SalesPersonID --ALWAYS join with main table next to from
+
+--combine rows of table, SET operator can be used in all clauses(UNION is the set operator)
+--EXCEPT order by which can only be used once AFTER youve combined them
+--number of columns in each query must be the same, data types must be compatabile w/each other
+--columns must be in order too, first column w/ first
+--first query is responsible with naming the merged columns in the final query
+
+--UNION returns all distinct rows and removes duplicates
+--combine the data from employees and customers into one table
+SELECT
+EmployeeID AS ID,
+FirstName,
+LastName
+FROM Sales.Employees
+
+UNION
+
+SELECT
+CustomerID,
+FirstName,
+LastName
+FROM Sales.Customers
+
+--UNION ALL returns all rows from both including duplicates, faster than UNION
+--EXCEPT returns all distinct rows from the first query that are not found in the secon query
+--order of querys matters, removes dups
+--find employees who are not customers at the same time
+
+SELECT
+FirstName,
+LastName
+FROM Sales.Employees
+EXCEPT
+SELECT
+FirstName,
+LastName
+FROM Sales.Customers
+
+--INTERSECT similar to INNER but it searches for common values and excludes eveything else
+--find employees who are also customers, order dont matter here
+SELECT
+FirstName,
+LastName
+FROM Sales.Employees
+INTERSECT
+SELECT
+FirstName,
+LastName
+FROM Sales.Customers
+
+--orders are stored in separate tables orders and orders archive, combine them
+
+SELECT* --beter practice to write out all columns
+FROM Sales.Orders
+UNION ALL
+SELECT*
+FROM Sales.OrdersArchive
