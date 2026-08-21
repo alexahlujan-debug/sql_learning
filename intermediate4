@@ -1,0 +1,102 @@
+/* This section includes the use of functions such as COUNT, SUM, AVG, MAX, and MIN. It also introduces a very important concept of WINDOW functions and the OVER CLAUSE. 
+It's helpful for when you want to group similar categories but also want to keep the same level of detail. Window functions in this section are RANK. */
+
+--Find total num of orders, sum of totl, avg, max , min
+
+SELECT
+COUNT(Sales) AS NumSales,
+SUM(Sales) total_sales,
+AVG(Sales) AvgSales,
+MAX(Sales) MaxSales,
+MIN(Sales) MinSales
+FROM orders
+
+--find total sales for each prod and provide orderID and orderDate
+--window func OVER() returns same result for each row to keep details
+SELECT
+OrderID,
+OrderDate,
+ProductID,
+SUM(Sales) OVER(PARTITION BY ProductID) TotalSalesByProducts
+FROM Sales.Orders
+--syntax: window func, OVER(PARTITION BY(group by essentially) ORDER BY(required for rank or val funcs)
+--find thr total sales across all orders and add orderID + orderDate
+SELECT
+OrderID,
+OrderDate,
+SUM(Sales) OVER() TotalSales
+FROM Sales.Orders
+
+--do the same but by product
+SELECT
+OrderID,
+OrderDate,
+ProductID,
+SUM(Sales) OVER(PARTITION BY ProductID) TotalSales
+FROM Sales.Orders
+--find the total sales for each combo of prod and order status
+SELECT
+OrderID,
+OrderDate,
+ProductID,
+OrderStatus,
+SUM(Sales) OVER(PARTITION BY ProductID, OrderStatus) TotalSales
+FROM Sales.Orders
+
+--rank each order from highest to lowest based on sales and provide order id and date
+SELECT
+OrderID,
+OrderDate,
+Sales,
+RANK() OVER(ORDER BY Sales DESC) AS ranking
+FROM Sales.Orders
+--continued syntax for window: ROWS/RANGE BETWEEN CURRENT ROW/N PRECEDING?UNBOUNDED PRECEDING AND
+-- UNBOUNDED FOLLOWING/ N FOLLOWING /CURRENT ROW. need to use ORDER BY to use this
+--UNBOUNDED following = very last row, order by always uses a frame which is unbound prec and current 
+-- window func can only be used in SELECT CLAUSE or ORDER BY, cant be nested 
+-- remember to use IN(blah,blah) instead of two equals
+
+--rank customers based on total sales
+SELECT
+CustomerID,
+SUM(Sales) TotalSales,
+RANK() OVER(ORDER BY SUM(Sales) DESC) RankCustomers
+FROM Sales.Orders
+GROUP BY CustomerID
+--need to use exact same columns for group by together with window in order to work)
+--build query with group by for simple aggregattions then window by
+
+--count returns number of rows within a window. COUNT(*) counts all rows regardless if there are nulls
+--count(column) doesnt count null rows, allows any data type
+
+--find the total num of orders for each customer
+SELECT
+OrderID,
+OrderDate,
+CustomerID,
+COUNT(*) OVER(PARTITION BY CustomerID) AS TotalPerCust
+FROM Sales.Orders
+
+--check whether the table orders cotains dups
+SELECT
+COUNT(OrderID) OVER(PARTITION BY OrderID) CheckPK
+FROM Sales.Orders
+
+--SUM() returns sum of vals within each window
+--find total sales across all orders and total sales fpr each prod, give order iD/date
+SELECT
+OrderId,
+OrderDate,
+ProductID,
+SUM(Sales) OVER() TotalSales,
+SUM(Sales) OVER(PARTITION BY ProductID) TotalProdSales
+FROM Sales.Orders
+--Find percentage contrubuition of each prod sale to total sale
+SELECT
+OrderId,
+OrderDate,
+ProductID,
+SUM(Sales) OVER() TotalSales,
+SUM(Sales) OVER(PARTITION BY ProductID) TotalProdSales,
+ROUND(CAST(Sales AS FLOAT) /SUM(Sales) OVER() * 100, 2) PercentageofTotal
+FROM Sales.Orders
