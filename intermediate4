@@ -1,0 +1,109 @@
+/* This section is a continuation of our WINDOW and OVER BY clause. Running totals are introduced which go inside the OVER BY clause which aggregates data over a 
+period of time. ROW_NUMBER and DENSE_RANK are also introduced along with examples. */
+
+--find avg sales across all orders, products, and provide order ID, date
+SELECT
+OrderID,
+OrderDate,
+AVG(Sales) OVER() TotalSales,
+AVG(Sales) OVER(PARTITION BY ProductID) TotalProdSales
+FROM Sales.Orders
+
+--find all orders where sales are higher than the avergae sales across all orders
+SELECT*
+FROM(
+SELECT
+OrderID,
+Sales,
+AVG(Sales) OVER() AvgSales
+FROM Sales.Orders)t
+WHERE Sales>AvgSales
+--null is never considered as the lowest or the highest
+
+--find the highest and lowest sales across all orders and high +low for prod, orderID date
+SELECT
+OrderID,
+OrderDate,
+Sales,
+ProductID,
+MIN(Sales) OVER() MinSales,
+MIN(Sales) OVER(PARTITION BY ProductID) ProdMin,
+MAX(Sales) OVER() MaxSales,
+MAX(Sales) OVER(PARTITION BY ProductID) ProdMax
+FROM Sales.Orders
+
+--show emps with highest salaries
+SELECT*
+FROM(
+SELECT
+EmployeeID,
+FirstName,
+Salary,
+MAX(Salary) OVER() MaxSalaryEmp
+FROM Sales.Employees)t
+WHERE Salary=MaxSalaryEmp
+
+--running data aggregates all values from beginnging to current without dropping
+--rolling drops oldest data but does same as running
+--calculate moving average of sales for each prod over time
+SELECT
+OrderID,
+OrderDate,
+ProductID,
+Sales,
+AVG(Sales) OVER(PARTITION BY ProductID) AvgProduct,
+AVG(Sales) OVER(PARTITION BY ProductID ORDER BY OrderDate)  MovingAvg, -- auto does unbound prec and current
+AVG(Sales) OVER(PARTITION BY ProductID ORDER BY OrderDate ROWS BETWEEN CURRENT ROW AND 1 FOLLOWING) RollingAvg
+FROM Sales.Orders
+--do the same as above but only include current order and next order(done above)
+--rank requires ORDER BY but partition optional, frame clause not allowed
+--ROW_NUMBER assigns a unique num for each row, doesnt share number for ties
+
+--rank the orders based on sales from high to low . 
+SELECT
+OrderID,
+ProductID,
+Sales,
+ROW_NUMBER() OVER(ORDER BY Sales DESC) Ranking,
+RANK() OVER(ORDER BY Sales DESC) Ranking2,
+DENSE_RANK() OVER(ORDER BY Sales DESC) Ranking3--must have over clause window funcs like row_num
+FROM Sales.Orders
+--rank handles ties(share ranking and also leaves gaps in ranking like if two tie itll skip a num)
+*/
+--DENSE_RANK like rank but it doesnt leave gaps in rank, if two tie itll preceed to very next num
+-- find the top highest sales for each prod
+SELECT*
+FROM(
+SELECT
+OrderID,
+ProductID,
+Sales,
+ROW_NUMBER() OVER(PARTITION BY ProductID ORDER BY Sales DESC) RankProdSales
+FROM Sales.Orders)t
+WHERE RankProdSales = 1
+--find lowest 2 customers based on total sales hint:Group by for simple aggregations
+SELECT*
+FROM(
+SELECT
+	CustomerID,
+	SUM(Sales) TotalSales,
+	ROW_NUMBER() OVER(ORDER BY SUM(Sales) DESC) Ranking
+FROM Sales.Orders
+GROUP BY CustomerID) t
+WHERE Ranking>2
+--AGAIN columns used in group by and window funcs must be the same
+
+--assign unique ids to order arfchive
+SELECT
+ROW_NUMBER() OVER(ORDER BY OrderID) UniqueID,
+* --adds rest of table
+FROM Sales.OrdersArchive
+
+--identify dup rows in orders archibe and return a clean result without any
+SELECT*
+FROM(
+SELECT
+ROW_NUMBER() OVER (PARTITION BY OrderID ORDER BY CreationTime DESC) rn,
+*
+FROM Sales.OrdersArchive)t
+WHERE rn=1
